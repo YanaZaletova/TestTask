@@ -18,7 +18,7 @@ export default function marker_info({ title, description }: Info) {
 const styles = StyleSheet.create({
   info: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 60,
     left: 15,
     right: 15,
     backgroundColor: '#ffffff',
