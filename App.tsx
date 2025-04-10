@@ -30,7 +30,11 @@ export default function App() {
   const [searchMarker, setSearchMarker] = useState('');
   const [notFoundMessage, setNotFoundMessage] = useState('');
   const mapRef = useRef<MapView>(null);
-  
+
+  const FAVOURITE_MARKERS_KEY = 'FAVOURITE_MARKERS_KEY';
+  const [favouriteMarkers, setFavouriteMarkers] = useState<UserMarker[]>([]);
+  const [favouritesVisible, setFavouritesVisible] = useState(false);
+  const [notDeleteMessage, setNotDeleteMessage] = useState('');
 
   const initialRegion = {
     latitude: 54.70933778858266,
@@ -56,6 +60,7 @@ export default function App() {
     };
   
     loadUserMarkers();
+    loadFavouriteMarkers();
   }, []);
 
   const mapPress = () => {
@@ -64,6 +69,13 @@ export default function App() {
     Keyboard.dismiss();
   };
 
+  const loadFavouriteMarkers = async () => {
+    const savedFavourites = await AsyncStorage.getItem(FAVOURITE_MARKERS_KEY);
+    if (savedFavourites) {
+      setFavouriteMarkers(JSON.parse(savedFavourites));
+    }
+  };
+  
   const focusOnUser = () => {
     if (location && mapRef.current) {
       const { latitude, longitude } = location.coords;
@@ -89,8 +101,8 @@ export default function App() {
       longitude: newMarkerCoords.longitude,
     };
   
-    setUserMarkers((prev) => {
-      const updated = [...prev, newMarker];
+    setUserMarkers((preview) => {
+      const updated = [...preview, newMarker];
       saveUserMarkers(updated);
       return updated;
     });
@@ -101,18 +113,42 @@ export default function App() {
   };
   
   const deleteUserMarker = (id: string) => {
-    setUserMarkers((prev) => {
-      const updated = prev.filter((m) => m.id !== id);
-      saveUserMarkers(updated);
-      return updated;
-    });
+    const markerToDelete = userMarkers.find((m) => m.id === id);
   
-    setSelectedUserMarker(null);
+    if (markerToDelete && isFavourite(markerToDelete)) {
+      setNotDeleteMessage('Избранную метку нельзя удалить');
+      setTimeout(() => {
+        setNotDeleteMessage('');
+      }, 1500);
+    } 
+    else {
+      setUserMarkers((preview) => {
+        const updated = preview.filter((m) => m.id !== id);
+        saveUserMarkers(updated);
+        return updated;
+      });
+      setSelectedUserMarker(null);
+    }
   };
-  
   
   const saveUserMarkers = async (markers: UserMarker[]) => {
       await AsyncStorage.setItem(USER_MARKERS_KEY, JSON.stringify(markers));
+  };
+
+  const addToFavourites = async (marker: UserMarker) => {
+    const updated = [...favouriteMarkers, marker];
+    setFavouriteMarkers(updated);
+    await AsyncStorage.setItem(FAVOURITE_MARKERS_KEY, JSON.stringify(updated));
+  };
+
+  const isFavourite = (marker: UserMarker) => {
+    return favouriteMarkers.some((fav) => fav.id === marker.id);
+  };  
+  
+  const removeFromFavourites = async (marker: UserMarker) => {
+    const updated = favouriteMarkers.filter((fav) => fav.id !== marker.id);
+    setFavouriteMarkers(updated);
+    await AsyncStorage.setItem(FAVOURITE_MARKERS_KEY, JSON.stringify(updated));
   };  
 
   const Search = () => {
@@ -137,13 +173,18 @@ export default function App() {
       if (foundMarkers) {
         setSelectedMarker(foundMarkers);
         setSelectedUserMarker(null);
-      } else if (foundUserMarkers) {
+      }
+      else if (foundUserMarkers) {
         setSelectedUserMarker(foundUserMarkers);
         setSelectedMarker(null);
       }
       setNotFoundMessage('');
-    } else {
+    } 
+    else {
       setNotFoundMessage('Метка не найдена');
+      setTimeout(() => {
+        setNotFoundMessage('');
+      }, 2000);
       setSelectedMarker(null);
       setSelectedUserMarker(null);
     }
@@ -176,8 +217,8 @@ export default function App() {
           initialRegion={initialRegion}
           ref={mapRef}
           onPress={mapPress}
-          onLongPress={(e) => {
-            const { latitude, longitude } = e.nativeEvent.coordinate;
+          onLongPress={(ev) => {
+            const { latitude, longitude } = ev.nativeEvent.coordinate;
             setNewMarkerCoords({ latitude, longitude });
             setModalVisible(true);
           }}          
@@ -191,16 +232,16 @@ export default function App() {
               key={m.key}
               coordinate={{ latitude: m.latitude, longitude: m.longitude }}
               title={m.title}
-              onPress={() => setSelectedMarker(m)}
               image={m.icon}
+              onPress={() => setSelectedMarker(m)}
             >
             </Marker>
           ))}
 
           {userLocationMarker && (
-              <Marker coordinate={userLocationMarker}>
-                <Image source={require('./assets/user.png')} style={{ width: 30, height: 30 }} />
-              </Marker>
+            <Marker coordinate={userLocationMarker}>
+              <Image source={require('./assets/user.png')} style={{ width: 30, height: 30 }} />
+            </Marker>
           )}
 
           {userMarkers.map((m) => (
@@ -212,20 +253,19 @@ export default function App() {
               onPress={() => setSelectedUserMarker(m)}
             />
           ))}
-
         </MapView>
 
         <Modal isVisible={modalVisible}>
           <View style={styles.modalContainer}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Добавить метку</Text>
+            <Text style={styles.textTitle}>Добавить метку</Text>
             <TextInput
-              style={{ borderBottomWidth: 1, marginTop: 10 }}
+              style={styles.inputTitle}
               placeholder="Введите название..."
               value={newMarkerTitle}
               onChangeText={setNewMarkerTitle}
             />
             {newMarkerCoords && (
-              <Text style={{ marginTop: 20, marginBottom: 10, textAlign: 'center' }}>
+              <Text style={styles.textCoords}>
                 Координаты: {newMarkerCoords.latitude.toFixed(10)}, {newMarkerCoords.longitude.toFixed(10)}
               </Text>
             )}
@@ -245,35 +285,99 @@ export default function App() {
         </Modal>
 
         {selectedUserMarker && (
-        <Modal isVisible={true}>
+          <TouchableWithoutFeedback onPress={() => {setNotDeleteMessage('');}}>
+            <Modal isVisible={true}>
+              <View style={styles.modalContainer}>
+              <View style={styles.modalTitleContainer}>
+                <Text style={styles.textTitle}>{selectedUserMarker.title}</Text>
+                {isFavourite(selectedUserMarker) ? (
+                  <TouchableOpacity onPress={() => removeFromFavourites(selectedUserMarker)}>
+                    <Image
+                      source={require('./assets/remove_favourites.png')}
+                      style={styles.modalFavouriteButton}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => addToFavourites(selectedUserMarker)}>
+                    <Image
+                      source={require('./assets/favourites.png')}
+                      style={styles.modalFavouriteButton}
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+                <Text style={[styles.textCoords, {marginTop: 10}]}>
+                  Координаты: {selectedUserMarker.latitude.toFixed(10)}, {selectedUserMarker.longitude.toFixed(10)}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => deleteUserMarker(selectedUserMarker.id)}
+                  style={[styles.modalButton, {backgroundColor: '#f76157'}]}
+                >
+                  <Text style={styles.modalText}>Удалить</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setSelectedUserMarker(null)}
+                  style={[styles.modalButton, {backgroundColor: '#4287f5'}]}
+                >
+                  <Text style={styles.modalText}>Отмена</Text>
+                </TouchableOpacity>
+
+                {notDeleteMessage !== '' && (
+                  <View style={styles.messageContainer}>
+                    <Text style={styles.messageText}>{notDeleteMessage}</Text>
+                  </View>
+                )}
+              </View>
+            </Modal>
+          </TouchableWithoutFeedback>
+        )}
+
+        <Modal isVisible={favouritesVisible}>
           <View style={styles.modalContainer}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{selectedUserMarker.title}</Text>
-            <Text style={{ marginTop: 10, marginBottom: 10, textAlign: 'center' }}>
-              Координаты: {selectedUserMarker.latitude.toFixed(10)}, {selectedUserMarker.longitude.toFixed(10)}
-            </Text>
+            <Text style={styles.textTitle}>⭐ Избранные метки</Text>
+
+            {favouriteMarkers.length === 0 ? (
+              <Text style={{ padding: 10 }}>Нет избранных меток</Text>
+            ) : (
+              favouriteMarkers.map((marker) => (
+                <TouchableOpacity
+                  key={marker.id}
+                  style={[styles.modalButton, {backgroundColor: '#ffc309'}]}
+                  onPress={() => {
+                    setFavouritesVisible(false);
+                    mapRef.current?.animateToRegion({
+                      latitude: marker.latitude,
+                      longitude: marker.longitude,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    });
+                    setSelectedUserMarker(marker);
+                    setSelectedMarker(null);
+                  }}
+                >
+                  <Text style={styles.modalText}>{marker.title}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+
             <TouchableOpacity
-              onPress={() => deleteUserMarker(selectedUserMarker.id)}
-              style={[styles.modalButton, {backgroundColor: '#f76157'}]}
+              style={[styles.modalButton, { backgroundColor: '#4287f5' }]}
+              onPress={() => setFavouritesVisible(false)}
             >
-              <Text style={styles.modalText}>Удалить</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setSelectedUserMarker(null)}
-              style={[styles.modalButton, {backgroundColor: '#4287f5'}]}
-            >
-              <Text style={styles.modalText}>Отмена</Text>
+              <Text style={styles.modalText}>Закрыть</Text>
             </TouchableOpacity>
           </View>
         </Modal>
-        )}
-
 
         <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={() => setFavouritesVisible(true)}>
+            <Image source={require('./assets/favourites.png')} style={styles.buttonImage} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={focusOnUser}>
-            <Image source={require('./assets/user.png')} style={{ width: 40, height: 40 }} />
+            <Image source={require('./assets/user.png')} style={styles.buttonImage} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={() => setMapType((type) => (type === 'standard' ? 'satellite' : 'standard'))}>
-          <Image source={require('./assets/map.png')} style={{ width: 40, height: 40 }} />
+          <Image source={require('./assets/map.png')} style={styles.buttonImage} />
           </TouchableOpacity>
         </View>
         
@@ -301,6 +405,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 3,
     marginBottom: 10,
+  },
+
+  buttonImage: {
+    width: 40,
+    height: 40
   },
 
   searchContainer: {
@@ -346,6 +455,18 @@ const styles = StyleSheet.create({
     borderRadius: 10 
   },
 
+  modalTitleContainer:{
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center'
+  },
+
+  modalFavouriteButton:{
+    width: 30, 
+    height: 30, 
+    marginLeft: 10 
+  },
+
   modalButton:{
     padding: 10, 
     marginTop: 8, 
@@ -356,5 +477,21 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     textAlign: 'center'
+  },
+
+  textCoords: {
+    marginTop: 20, 
+    marginBottom: 10, 
+    textAlign: 'center'
+  },
+
+  textTitle:{
+    fontWeight: 'bold', 
+    fontSize: 16
+  },
+
+  inputTitle:{
+    borderBottomWidth: 0.5, 
+    marginTop: 10
   }
 });
