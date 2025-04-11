@@ -152,12 +152,14 @@ export default function App() {
   };  
 
   const Search = () => {
+    const lowerSearch = searchMarker.toLowerCase();
+  
     const foundMarkers = markers.find(marker =>
-      searchMarker.toLowerCase() === marker.title.toLowerCase()
+      marker.title.toLowerCase().includes(lowerSearch)
     );
   
     const foundUserMarkers = userMarkers.find(marker =>
-      searchMarker.toLowerCase() === marker.title.toLowerCase()
+      marker.title.toLowerCase().includes(lowerSearch)
     );
   
     const found = foundMarkers || foundUserMarkers;
@@ -173,14 +175,13 @@ export default function App() {
       if (foundMarkers) {
         setSelectedMarker(foundMarkers);
         setSelectedUserMarker(null);
-      }
-      else if (foundUserMarkers) {
+      } else if (foundUserMarkers) {
         setSelectedUserMarker(foundUserMarkers);
         setSelectedMarker(null);
       }
+  
       setNotFoundMessage('');
-    } 
-    else {
+    } else {
       setNotFoundMessage('Метка не найдена');
       setTimeout(() => {
         setNotFoundMessage('');
@@ -190,9 +191,8 @@ export default function App() {
     }
   
     Keyboard.dismiss();
-  };
+  };  
   
-
   return (
     <TouchableWithoutFeedback onPress={mapPress}>
       <View style={{flex: 1}}>
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
 
   searchContainer: {
     position: 'absolute',
-    top: 40,
+    top: 20,
     left: 10,
     right: 10,
     paddingHorizontal: 10,
