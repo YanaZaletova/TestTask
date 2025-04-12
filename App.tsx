@@ -3,9 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity, TextInput, Text, Image } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { markers } from './assets/markers';
-import MarkerInfo from './assets/marker_info';
-import { UserMarker } from './assets/user_marker';
+import { markers } from './markers';
+import MarkerInfo from './marker_info';
+import { UserMarker } from './user_marker';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -195,7 +195,7 @@ export default function App() {
   
   return (
     <TouchableWithoutFeedback onPress={mapPress}>
-      <View style={{flex: 1}}>
+      <View style={styles.container}>
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
@@ -213,7 +213,8 @@ export default function App() {
         </View>
 
         <MapView
-          style={{flex: 1}}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
           initialRegion={initialRegion}
           ref={mapRef}
           onPress={mapPress}
@@ -223,7 +224,6 @@ export default function App() {
             setModalVisible(true);
           }}          
           mapType={mapType}
-          provider={PROVIDER_GOOGLE}
           zoomEnabled={true}
           zoomControlEnabled={true}
         >
@@ -390,6 +390,16 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+
+  map:{
+    ...StyleSheet.absoluteFillObject,
+  },
 
   buttonContainer: {
     position: 'absolute',

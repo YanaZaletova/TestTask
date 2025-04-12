@@ -20,8 +20,14 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
+    },
+    "debug": {
+      "android": {
+        "buildType": "apk"
+      },
+    "distribution": "internal"
     }
   }
 }
