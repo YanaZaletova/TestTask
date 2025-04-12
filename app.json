@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/app_icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/app_icon.png",
       "resizeMode": "contain",
@@ -26,7 +26,10 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.ra1s1n.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,6 +38,7 @@
       "eas": {
         "projectId": "603683b9-0419-4166-a288-c9bfb9a171f2"
       }
-    }
+    },
+    "owner": "0bi4niy4el0vek"
   }
 }
