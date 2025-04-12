@@ -17,10 +17,6 @@
 ```
 TESTTASK/
 ├── .expo/
-├── android/                 • Android-сборка и конфигурации
-│   ├── app/                    ◦ Android-приложение
-│   ├── build.gradle            ◦ Скрипты сборки Gradle
-│   └── gradle/                 ◦ Конфигурации Gradle
 ├── assets/                  • Изображения, иконки
 │   ├── markers_icon/           ◦ Иконки меток
 │   ├── app_icon.png            ◦ Иконка приложения
