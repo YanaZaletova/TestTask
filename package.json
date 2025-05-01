@@ -10,26 +10,36 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
-    "expo": "~52.0.43",
+    "expo": "~52.0.46",
+    "expo-gl": "~15.0.5",
     "expo-location": "~18.0.10",
     "expo-status-bar": "~2.0.1",
+    "expo-three": "^8.0.0",
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-maps": "1.18.0",
     "react-native-modal": "^14.0.0-rc.1",
-    "uuid": "^11.1.0",
-    "react-native-maps": "1.18.0"
+    "react-native-reanimated": "^3.17.5",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-uuid": "^2.0.3",
+    "three": "^0.166.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
+    "@types/three": "^0.166.0",
     "typescript": "^5.3.3"
   },
   "private": true,
   "expo": {
     "doctor": {
       "reactNativeDirectoryCheck": {
-        "exclude": ["react-native-maps", "uuid"],
+        "exclude": [
+          "react-native-maps",
+          "uuid"
+        ],
         "listUnknownPackages": false
       }
     }
